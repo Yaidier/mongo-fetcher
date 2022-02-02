@@ -1,0 +1,64 @@
+/**
+ * All of the CSS for your admin-specific functionality should be
+ * included in this file.
+ */
+
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-warning,
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-yes-alt {
+     position: relative;
+     cursor: pointer;
+ }
+
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-warning {
+    color: #dba617;
+ }
+
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-yes-alt {
+    color: #00a32a;
+ }
+ 
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-warning::after,
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-yes-alt::after {
+    position: absolute;
+    display: block;
+    left: calc( 100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(36, 36, 36, 0.97);
+    color: #fff;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    width: 200px;
+    padding: 10px 5px;
+    border-radius: 3px;
+    opacity: 0;
+    z-index: 100;
+    line-height: 1.3em;
+    pointer-events: none;
+ }
+
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-warning::after {
+    content: "This post already exist on WP";
+ }
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-yes-alt::after {
+    content: "Ready to insert as a WP Post";
+ }
+ 
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-warning:hover::after, 
+ .toplevel_page_mongo_fetcher_plugin span.dashicons-yes-alt:hover::after {
+    opacity: 1;
+    transition: 0.4s ease 1s;
+    pointer-events: auto;
+}
+
+@media ( min-width: 883px ){
+    .toplevel_page_mongo_fetcher_plugin th#post_status {
+        width: 50px;
+        text-align: center;
+     }
+    
+     .toplevel_page_mongo_fetcher_plugin [data-colname="Status"] {
+        text-align: center;
+     }
+ }
