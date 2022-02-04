@@ -46,6 +46,10 @@ class Mongo_List_Table extends WP_List_Table {
         return $this->mf_data;
     }
 
+    public function set_mf_data( $mf_data ){
+        return $this->mf_data = $mf_data;
+    }
+
     public function prepare_items() {
         $columns                = $this->get_columns();
         $hidden                 = array();
@@ -63,5 +67,5 @@ class Mongo_List_Table extends WP_List_Table {
           default:
             return print_r( $item, true ) ; //Show the whole array for troubleshooting purposes
         }
-      }
+    }
 }

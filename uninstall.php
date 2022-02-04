@@ -29,3 +29,7 @@
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
+
+if( isset( $mongo_fetcher_plugin ) ) {
+    
+}

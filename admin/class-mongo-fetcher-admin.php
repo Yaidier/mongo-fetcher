@@ -20,6 +20,9 @@
  * @subpackage Mongo_Fetcher/admin
  * @author     Yaidier Perez <yaidier.perez@gmail.com>
  */
+
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-mongo-settings.php';
+
 class Mongo_Fetcher_Admin {
 
 	/**
@@ -40,14 +43,6 @@ class Mongo_Fetcher_Admin {
 	 */
 	private $version;
 
-	/**
-	 * The settings.
-	 *
-	 * @since    1.0.0
-	 * @access   private
-	 * @var      string    $version    The current version of this plugin.
-	 */
-	private $settings_sections;
 
 	/**
 	 * Initialize the class and set its properties.
@@ -57,11 +52,8 @@ class Mongo_Fetcher_Admin {
 	 * @param      string    $version    The version of this plugin.
 	 */
 	public function __construct( $mongo_fetcher, $version ) {
-
-		$this->mongo_fetcher        = $mongo_fetcher;
-		$this->version              = $version;
-        $this->settings_sections    = (array) require_once plugin_dir_path( __FILE__ ) . '/config/settings-sections.php';
-    
+		$this->mongo_fetcher    = $mongo_fetcher;
+		$this->version          = $version;        
 	}
 
 	/**
@@ -137,6 +129,10 @@ class Mongo_Fetcher_Admin {
 
 	}
 
+    public function settings_page() {
+        Mongo_Settings::init();
+    }
+
     public function admin() {
         $tab = isset( $_GET['tab'] ) ? $_GET['tab'] : null;
 
@@ -176,31 +172,34 @@ class Mongo_Fetcher_Admin {
 
         settings_fields( 'mf_settings_group' );
         do_settings_sections( 'mf_settings_section' );
+        do_settings_sections( 'mf_settings_cron_section' );
         submit_button();
 
         echo '</form>';
         return ob_get_clean();
     }
 
-    private function get_the_settings_options() {
-        $mongo_credentials = [];
+    private function get_settings_options( $options ) {
+        $settings_fields    = Mongo_Settings::get_settings_fields( $options );
+        $returning_options  = [];
 
-        foreach ($this->settings_sections['mf_options']['fields'] as $field_id => $field) {
+        foreach ($settings_fields as $field_id => $field) {
             $value = get_option( $field_id . '_value' );
 
-            if ( ( $value === false || $value == '' || $value === 'null' ) && $field['is_mandatory'] ) {
-                return [ 'status' => 'error', 'message' => $field['label'] . ' is missng' ];
+            if ( ( $value === false || $value == '' || $value === 'null' ) 
+                && ( isset( $field['is_mandatory'] ) && $field['is_mandatory'] ) ) {
+
+                    return [ 'status' => 'error', 'message' => $field['label'] . ' is missng' ];
             } else {
-                $mongo_credentials[$field_id] = $value;
+                $returning_options[$field_id] = $value;
             }
         }
 
-        return $mongo_credentials;
+        return $returning_options;
     }
 
     private function get_sync_content() {
-        $mongo_credentials = $this->get_the_settings_options();
-        extract( $mongo_credentials );
+        extract( $this->return_all_settings() );
 
         if( isset( $status ) && $status == 'error' ) {
             add_settings_error( 'Sync Mongo', 'sync-mongo', $message, 'error' );
@@ -214,16 +213,30 @@ class Mongo_Fetcher_Admin {
 
         $this->check_for_sync_request();
 
+        $mongo_results = $this->get_mongo_db_results( $mf_user, $mf_pass, $mf_server, $mf_database, $mf_collection, $mf_number_of_post );
+
+        if( !$mongo_results ) {
+            return;
+        }
+
+        $list_table = new Mongo_List_Table();
+        $list_table->set_mf_data( $mongo_results );
+
+        update_option( 'mf-temp-data-to-push', $mongo_results );
+        return $this->display_sync_content( $list_table );
+    }
+
+    private function get_mongo_db_results( $mf_user, $mf_pass, $mf_server, $mf_database, $mf_collection, $mf_number_of_post ) {
+        $mongo_results = [];
+
         try {
             $mongo_client   = new Mongo_client( $mf_user, $mf_pass, $mf_server, $mf_database );
             $db_objects     = $mongo_client->get_collection( $mf_collection );
         }
         catch (Exception $e) {
             add_settings_error( 'Sync Mongo', 'sync-mongo', $e->getMessage(), 'error' );
-            return;
+            return false;
         }
-        
-        $mongo_results = new Mongo_List_Table();
 
         $cont = 0;
         foreach( $db_objects as $object ) {
@@ -231,12 +244,27 @@ class Mongo_Fetcher_Admin {
                 break;
             }
 
-            $mongo_results->add_item( $this->prepare_object( $object ) );
+            array_push( $mongo_results, $this->prepare_object( $object ) );
             $cont++;
         }
 
-        update_option( 'mf-temp-data-to-push', $mongo_results->get_mf_data() );
-        return $this->display_sync_content( $mongo_results );
+        return $mongo_results;
+    } 
+
+    public function run_cron_event() {
+        extract( $this->return_all_settings() );
+        $mongo_results  = $this->get_mongo_db_results( $mf_user, $mf_pass, $mf_server, $mf_database, $mf_collection, $mf_number_of_post );
+
+        foreach( $mongo_results as $data ) {
+            $this->create_new_wp_posts( $data );
+        }
+    }
+
+    private function return_all_settings() {
+        $mongo_credentials  = $this->get_settings_options( 'mf_options' );
+        $sync_settngs       = $this->get_settings_options( 'mf_sync_options' );
+
+        return array_merge( $mongo_credentials, $sync_settngs );
     }
 
     private function check_for_sync_request() {
@@ -312,37 +340,6 @@ class Mongo_Fetcher_Admin {
         ];
 
         return wp_insert_post( $post_arr );
-    }
-
-    public function settings_page() {
-        foreach ( $this->settings_sections as $section_id => $section ) {
-            add_settings_section( $section_id, $section['label'], array($this, $section['callback']), $section['page']);
-
-            foreach ( $section['fields'] as $field_id => $field ) {
-                register_setting( $field['option_group'], $field_id . '_value' );
-                add_settings_field( 'mf_field_' . $field_id, $field['label'], array($this, 'render_' . $field['type'] ), $section['page'], $section_id, [ 'id' => $field_id ] );
-            }
-        }
-    }
-
-    public function general_options() {
-
-    }
-
-    public function render_text( $args ) {
-        $field_id   = $args['id'];
-        $value      = get_option( $field_id . '_value' );
-        $html       = '<input type="text" name="' . $field_id . '_value" value="' . $value . '"/>';
-
-        echo $html;
-    }
-
-    public function render_number( $args ) {
-        $field_id   = $args['id'];
-        $value      = get_option( $field_id . '_value' );
-        $html       = '<input type="number" name="' . $field_id . '_value" value="' . $value . '"/>';
-
-        echo $html;
     }
 
 }

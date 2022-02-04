@@ -37,6 +37,11 @@ if ( ! defined( 'WPINC' ) ) {
  */
 define( 'MONGO_FETCHER_VERSION', '1.0.0' );
 
+/**
+ * Currently plugin path.
+ */
+define( 'MONGO_FETCHER_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
+
 require_once plugin_dir_path( __FILE__ ) . '/vendor/autoload.php';
 
 /**
@@ -75,10 +80,7 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-mongo-fetcher.php';
  *
  * @since    1.0.0
  */
-function run_mongo_fetcher() {
+$mongo_fetcher_plugin = new Mongo_Fetcher();
+$mongo_fetcher_plugin->run();
 
-	$plugin = new Mongo_Fetcher();
-	$plugin->run();
 
-}
-run_mongo_fetcher();

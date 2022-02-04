@@ -66,6 +66,9 @@ class Mongo_Fetcher {
 	 *
 	 * @since    1.0.0
 	 */
+
+    private $mongo_crons;
+
 	public function __construct() {
 		if ( defined( 'MONGO_FETCHER_VERSION' ) ) {
 			$this->version = MONGO_FETCHER_VERSION;
@@ -78,7 +81,6 @@ class Mongo_Fetcher {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
-
 	}
 
 	/**
@@ -112,6 +114,12 @@ class Mongo_Fetcher {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-mongo-fetcher-i18n.php';
 
 		/**
+		 * The class responsible for defining internationalization functionality
+		 * of the plugin.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-mongo-crons.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-mongo-fetcher-admin.php';
@@ -132,9 +140,11 @@ class Mongo_Fetcher {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-mongo-fetcher-public.php';
 
-		$this->loader = new Mongo_Fetcher_Loader();
+		$this->loader       = new Mongo_Fetcher_Loader();
 
 	}
+
+
 
 	/**
 	 * Define the locale for this plugin for internationalization.
@@ -148,7 +158,6 @@ class Mongo_Fetcher {
 	private function set_locale() {
 
 		$plugin_i18n = new Mongo_Fetcher_i18n();
-
 		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 
 	}
@@ -162,12 +171,22 @@ class Mongo_Fetcher {
 	 */
 	private function define_admin_hooks() {
 
-		$plugin_admin = new Mongo_Fetcher_Admin( $this->get_mongo_fetcher(), $this->get_version() );
+		$plugin_admin       = new Mongo_Fetcher_Admin( $this->get_mongo_fetcher(), $this->get_version() );
+        $this->mongo_crons  = new Mongo_Crons();
 
+        /**
+         * Adding Filters
+         */
+        $this->loader->add_filter( 'cron_schedules', $this->mongo_crons, 'add_custom_interval' );
+
+        /**
+         * Adding Actions
+         */
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_admin_pages' );
         $this->loader->add_action( 'admin_init', $plugin_admin, 'settings_page' );
+        $this->loader->add_action( $this->mongo_crons->get_cron_name(), $plugin_admin, 'run_cron_event' );
 
 	}
 
@@ -195,6 +214,10 @@ class Mongo_Fetcher {
 	public function run() {
 		$this->loader->run();
 	}
+
+    public function plugin_uninstall() {
+        $this->mongo_crons->remove_the_cron_job();
+    }
 
 	/**
 	 * The name of the plugin used to uniquely identify it within the context of
