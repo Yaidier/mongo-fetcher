@@ -104,6 +104,24 @@ class Mongo_Settings {
         echo $html;
     }
 
+    static function render_info( $args ) {
+        $timestamp      = wp_next_scheduled( 'mongo_fetcher_cron_job' );
+        $interval_value = get_option( 'mf-interval-value' );
+        
+        if ( $timestamp ) {
+            $current_date   = new DateTime();
+            $future_date    = new DateTime( date('m/d/Y H:i:s', $timestamp ) );
+            $interval       = $future_date->diff( $current_date );
+            $output         = $interval->format("%a days, %h hours, %i minutes, %s seconds");
+            $output         = $output . "<span> ( Every $interval_value days ) </span>";
+        }
+        else {
+            $output = 'No Events Scheduled';
+        }
+
+        echo '<p class="mf-cron_schedule_next_run" >' . $output . '</p>';
+    }
+
     static function get_settings_fields( $options ) {
         $settings_sections = self::settings_sections();
 

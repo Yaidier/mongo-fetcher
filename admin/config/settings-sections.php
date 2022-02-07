@@ -55,8 +55,10 @@ return [
                 'type'              => 'select',
                 'options'           => [
                     'None'              => 0, 
+                    'Twice per day'     => 0.5, 
                     'Daily'             => 1, 
                     'Every Two Days'    => 2,
+                    'Every Three Days'  => 3,
                 ],
                 'is_mandatory'      => false,
             ],
@@ -64,6 +66,12 @@ return [
                 'option_group'      => 'mf_settings_group',
                 'label'             => 'Hour to run',
                 'type'              => 'time',
+                'is_mandatory'      => false,
+            ],
+            'mf_next_event_info' => [
+                'option_group'      => 'mf_settings_group',
+                'label'             => 'Next Event Schedule for',
+                'type'              => 'info',
                 'is_mandatory'      => false,
             ],
         ],

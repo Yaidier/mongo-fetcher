@@ -119,20 +119,10 @@ class Mongo_Fetcher {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-mongo-crons.php';
 
-		/**
+        /**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-mongo-fetcher-admin.php';
-
-		/**
-		 * The class responsible for connecting to mongo db.
-		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-mongo-client.php';
-
-		/**
-		 * The class responsible for listing the results using Wordpress API.
-		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-mongo-list-table.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
@@ -143,8 +133,6 @@ class Mongo_Fetcher {
 		$this->loader       = new Mongo_Fetcher_Loader();
 
 	}
-
-
 
 	/**
 	 * Define the locale for this plugin for internationalization.
@@ -198,9 +186,7 @@ class Mongo_Fetcher {
 	 * @access   private
 	 */
 	private function define_public_hooks() {
-
 		$plugin_public = new Mongo_Fetcher_Public( $this->get_mongo_fetcher(), $this->get_version() );
-
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 

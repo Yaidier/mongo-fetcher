@@ -52,13 +52,10 @@
     pointer-events: auto;
 }
 
-@media ( min-width: 883px ){
-    .toplevel_page_mongo_fetcher_plugin th#post_status {
-        width: 50px;
-        text-align: center;
-     }
-    
-     .toplevel_page_mongo_fetcher_plugin [data-colname="Status"] {
-        text-align: center;
-     }
- }
+.mf-cron_schedule_next_run {
+    width: fit-content;
+    padding: 5px 10px;
+    font-style: italic;
+    background-color: #ddd;
+    border-radius: 3px;
+}

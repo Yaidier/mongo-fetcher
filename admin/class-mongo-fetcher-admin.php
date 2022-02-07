@@ -21,7 +21,6 @@
  * @author     Yaidier Perez <yaidier.perez@gmail.com>
  */
 
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-mongo-settings.php';
 
 class Mongo_Fetcher_Admin {
 
@@ -53,7 +52,8 @@ class Mongo_Fetcher_Admin {
 	 */
 	public function __construct( $mongo_fetcher, $version ) {
 		$this->mongo_fetcher    = $mongo_fetcher;
-		$this->version          = $version;        
+		$this->version          = $version;   
+        $this->load_dependencies();
 	}
 
 	/**
@@ -128,6 +128,30 @@ class Mongo_Fetcher_Admin {
         add_menu_page( 'Mongo Fetcher', 'Mongo Fetcher', 'manage_options', 'mongo_fetcher_plugin', array($this, 'admin'), 'dashicons-align-full-width', 110 );
 
 	}
+
+    private function load_dependencies() {
+
+		/**
+		 * The class responsible for connecting to mongo db.
+		 */
+		require_once MONGO_FETCHER_PLUGIN_PATH . 'admin/includes/class-mongo-client.php';
+
+		/**
+		 * The class responsible for listing the results using Wordpress API.
+		 */
+		require_once MONGO_FETCHER_PLUGIN_PATH . 'admin/includes/class-mongo-list-table.php';
+
+		/**
+		 * The class responsible for handling the settings tab of the pplugin.
+		 */
+		require_once MONGO_FETCHER_PLUGIN_PATH . 'admin/includes/class-mongo-settings.php';
+
+		/**
+		 * The class responsible for handling the Wordpress API.
+		 */
+		require_once MONGO_FETCHER_PLUGIN_PATH . 'admin/includes/class-mongo-wp-handler.php';
+
+    }
 
     public function settings_page() {
         Mongo_Settings::init();
@@ -256,7 +280,7 @@ class Mongo_Fetcher_Admin {
         $mongo_results  = $this->get_mongo_db_results( $mf_user, $mf_pass, $mf_server, $mf_database, $mf_collection, $mf_number_of_post );
 
         foreach( $mongo_results as $data ) {
-            $this->create_new_wp_posts( $data );
+            Mongo_Fetcher_Wp_Handler::insert_post($data);
         }
     }
 
@@ -272,7 +296,7 @@ class Mongo_Fetcher_Admin {
             $data_to_push = get_option( 'mf-temp-data-to-push' );
 
             foreach( $data_to_push as $data ) {
-                $this->create_new_wp_posts( $data );
+                Mongo_Fetcher_Wp_Handler::insert_post($data);
             }
 
             add_settings_error( 'Sync Mongo', 'sync-mongo', 'Posts Syncronyzed Successfully', 'success' );
@@ -313,33 +337,6 @@ class Mongo_Fetcher_Admin {
         }
 
         return false;
-    }
-
-    public function create_new_wp_posts( $data ) {
-        /**
-         * Always publish to "News" category
-        */
-        $cat_name       = 'News';
-        $news_cat_id    = get_cat_ID( $cat_name);
-
-        extract( $data );
-        $data = $data;
-        $post_arr = [
-            'post_title'    => $post_title,
-            'post_content'  => $post_content,
-            'post_category' => [ $news_cat_id ],
-            'post_status'   => 'publish',
-            'post_author'   => get_current_user_id(),
-            'tags_input'    => [ $post_tag ],
-            'meta_input'    => [
-                'source'        => $source_meta,
-                'link'          => $url,
-                'start_date'    => $news_date_meta,
-                'Type'          => $cat_name
-            ],
-        ];
-
-        return wp_insert_post( $post_arr );
     }
 
 }

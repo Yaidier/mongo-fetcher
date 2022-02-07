@@ -73,12 +73,12 @@ class Mongo_Crons {
            $this->remove_the_cron_job();
         }
         
-        $result = wp_schedule_event( $time, $interval_name, $this->cron_job_name );
+        wp_schedule_event( $time, $interval_name, $this->cron_job_name );
     }
 
     public function remove_the_cron_job() {        
-        $timestamp = wp_next_scheduled( $this->cron_job_name );
-        $result = wp_unschedule_event( $timestamp, $this->cron_job_name );
+        $timestamp  = wp_next_scheduled( $this->cron_job_name );
+        wp_unschedule_event( $timestamp, $this->cron_job_name );
     }
 
     public function run() {
