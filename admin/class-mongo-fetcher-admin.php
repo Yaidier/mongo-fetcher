@@ -309,7 +309,7 @@ class Mongo_Fetcher_Admin {
 
         $mongo_results->prepare_items(); 
         $mongo_results->display(); 
-        submit_button( 'Sync Mongo DB', 'primary', 'mf_sync_mongo_db_now' );
+        submit_button( 'Sync All Posts', 'primary', 'mf_sync_mongo_db_now' );
         
         echo '</form>';
         return ob_get_clean();
@@ -325,6 +325,7 @@ class Mongo_Fetcher_Admin {
             'post_content'          => $object->abstract,
             'post_tag'              => $object->keyword,
             'post_already_exist'    => $this->check_if_post_alreay_exist( $object->title ),
+            'post_sync_log'         => '',
         ];
 
         return $object_to_insert;

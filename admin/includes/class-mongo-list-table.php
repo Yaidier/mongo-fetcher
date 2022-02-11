@@ -65,8 +65,8 @@ class Mongo_List_Table extends WP_List_Table {
 
     function get_sortable_columns() {
         $sortable_columns = array(
-          'post_already_exist' => array( 'post_already_exist',false ),
-          'post_title'  => array( 'post_title', false ),
+          'post_already_exist'  => array( 'post_already_exist',false ),
+          'post_title'          => array( 'post_title', false ),
         );
         return $sortable_columns;
     }
@@ -84,7 +84,7 @@ class Mongo_List_Table extends WP_List_Table {
           case 'post_title':
             return $item[ $column_name ];
           case 'post_already_exist':
-            return $item[ 'post_already_exist' ] ? '<span class="dashicons dashicons-warning"></span>' : '<span class="dashicons dashicons-yes-alt"></span>';
+            return ( $item[ 'post_already_exist' ] ? '<span class="dashicons dashicons-warning"></span>' : '<span class="dashicons dashicons-yes-alt"></span>' ) . '<span> ' . $item[ 'post_sync_log' ] . '</span>';
           default:
             return print_r( $item, true ) ; //Show the whole array for troubleshooting purposes
         }
@@ -127,8 +127,9 @@ class Mongo_List_Table extends WP_List_Table {
         
         foreach( $this->mf_data as &$data ){
             if( in_array( $data['ID'], $post_db_ids_to_sync ) ) {   
-                if( Mongo_Fetcher_Wp_Handler::insert_post( $data ) ) {
+                if( $response = Mongo_Fetcher_Wp_Handler::insert_post( $data ) ) {
                     $data['post_already_exist'] = true;
+                    $data['post_sync_log']      = $response;
                 }
             }
         }
